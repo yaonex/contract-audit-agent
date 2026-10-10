@@ -1,0 +1,1 @@
+"""Progress event publisher."""

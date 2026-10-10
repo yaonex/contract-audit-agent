@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package audit.v1;
+
+option go_package = "github.com/yaonex/contract-audit-agent/server/gen/audit/v1;auditv1";
+
+service AuditService {
+  // Run an audit and stream progress events; the last event carries the report.
+  rpc RunAudit(RunAuditRequest) returns (stream AuditEvent);
+  rpc Cancel(CancelRequest) returns (CancelResponse);
+}
+
+message RunAuditRequest {
+  string task_id = 1;
+  string source_code = 2;          // Solidity source (single file for MVP)
+  string filename = 3;
+  AuditOptions options = 4;
+}
+
+message AuditOptions {
+  repeated string vuln_categories = 1;   // empty = all
+  bool enable_verifier = 2;
+  bool enable_rag = 3;
+  int32 max_tokens = 4;
+  int32 timeout_seconds = 5;
+}
+
+message AuditEvent {
+  string task_id = 1;
+  string stage = 2;                // static_analysis | discover | verify | judge | report
+  string message = 3;
+  int32 progress_percent = 4;
+  oneof payload {
+    string finding_json = 10;      // incremental finding
+    string report_json = 11;       // final report (terminal event)
+    string error = 12;             // terminal error
+  }
+}
+
+message CancelRequest { string task_id = 1; }
+message CancelResponse { bool accepted = 1; }

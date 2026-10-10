@@ -1,0 +1,12 @@
+# Vulnerability taxonomy: drives Discoverer sharding and RAG payload filters.
+categories:
+  - id: reentrancy
+    name: Reentrancy
+  - id: access_control
+    name: Access Control
+  - id: oracle_manipulation
+    name: Oracle / Price Manipulation
+  - id: integer_precision
+    name: Integer Overflow / Precision Loss
+  - id: business_logic
+    name: Business Logic

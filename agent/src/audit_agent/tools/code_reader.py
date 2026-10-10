@@ -1,0 +1,1 @@
+"""Read function/contract snippets."""

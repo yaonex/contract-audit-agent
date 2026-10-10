@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GroundTruthLabel",
+  "type": "object",
+  "required": ["sample_id", "file", "vulnerabilities"],
+  "properties": {
+    "sample_id": {"type": "string"},
+    "file": {"type": "string"},
+    "vulnerabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["category", "function"],
+        "properties": {
+          "category": {"type": "string"},
+          "function": {"type": "string"},
+          "lines": {"type": "array", "items": {"type": "integer"}},
+          "severity": {"type": "string"}
+        }
+      }
+    }
+  }
+}
