@@ -1,19 +1,21 @@
-.PHONY: setup proto test eval audit index-kb lint
+.PHONY: sync proto test eval audit index-kb lint
 
-setup:
-	cd agent && uv sync
+AGENT := uv run --project agent
+
+sync:
+	cd agent && uv sync --extra dev
 
 proto:
 	bash scripts/gen_proto.sh
 
 test:
-	cd agent && uv run pytest -q
+	$(AGENT) --extra dev pytest agent/tests
 
 lint:
-	cd agent && uv run ruff check src tests
+	$(AGENT) ruff check agent
 
 audit:
-	cd agent && uv run audit-agent audit ../$(FILE) --out ../reports
+	$(AGENT) audit-agent audit $(FILE)
 
 index-kb:
 	cd agent && uv run audit-agent index-kb ../knowledge_base/processed

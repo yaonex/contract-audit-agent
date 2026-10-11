@@ -1,25 +1,25 @@
-"""CLI entry point: audit / eval / index-kb."""
+"""CLI entrypoint: audit / eval / index-kb."""
+from pathlib import Path
+
 import typer
 
-app = typer.Typer(help="Smart contract security audit agent")
+app = typer.Typer(help="Smart contract security audit agent.", no_args_is_help=True)
 
 
 @app.command()
-def audit(path: str, out: str = "reports") -> None:
-    """Audit a Solidity file and write Markdown + JSON reports."""
-    raise NotImplementedError
-
+def audit(path: Path = typer.Argument(..., help="Solidity file or project dir")) -> None:
+    """Run an audit on a contract."""
+    typer.echo(f"[todo] audit {path}")
 
 @app.command()
-def eval(split: str = "dev") -> None:
-    """Run the benchmark evaluation."""
-    raise NotImplementedError
+def eval(dataset: str = typer.Option("smartbugs", help="Dataset name")) -> None:
+    """Run evaluation on a dataset."""
+    typer.echo(f"[todo] eval {dataset}")
 
-
-@app.command("index-kb")
-def index_kb(src: str) -> None:
-    """Ingest the vulnerability knowledge base into Qdrant."""
-    raise NotImplementedError
+@app.command(name="index-kb")
+def index_kb() -> None:
+    """Build the RAG knowledge base."""
+    typer.echo("[todo] index-kb")
 
 
 if __name__ == "__main__":
