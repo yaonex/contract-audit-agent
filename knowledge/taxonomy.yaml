@@ -1,12 +1,92 @@
 # Vulnerability taxonomy: drives Discoverer sharding and RAG payload filters.
+# Discoverer 分片（每类一个 prompt）
+# RAG 的 payload 过滤
+# 评测的分类别统计
+# 数据集标签映射（SmartBugs 的标签名和我们的不一样）
+version: 1
+# shard: true  -> this category gets a dedicated Discoverer (Phase 1.4)
+# smartbugs:   -> label used by SmartBugs Curated (null = not in that dataset)
 categories:
   - id: reentrancy
     name: Reentrancy
+    description: External call made before state is updated, letting the callee re-enter.
+    swc: [SWC-107]
+    smartbugs: reentrancy
+    shard: true
+
   - id: access_control
     name: Access Control
+    description: Missing or flawed authorization on privileged functions (incl. tx.origin misuse, unprotected selfdestruct/initializer).
+    swc: [SWC-105, SWC-106, SWC-115]
+    smartbugs: access_control
+    shard: true
+
   - id: oracle_manipulation
     name: Oracle / Price Manipulation
-  - id: integer_precision
-    name: Integer Overflow / Precision Loss
+    description: Price or state read from a manipulable source (spot price, flash-loan-sensitive pool reserves).
+    swc: []
+    smartbugs: null
+    shard: true
+
+  - id: arithmetic
+    name: Integer / Precision Errors
+    description: Overflow/underflow, rounding, division-before-multiplication, decimals mismatch.
+    swc: [SWC-101]
+    smartbugs: arithmetic
+    shard: true
+
   - id: business_logic
     name: Business Logic
+    description: Protocol-specific logic flaws not covered by generic patterns (accounting errors, broken invariants, bad state transitions).
+    swc: []
+    smartbugs: null
+    shard: true
+
+  - id: unchecked_low_level_calls
+    name: Unchecked Low-level Calls
+    description: Return value of call/send/delegatecall ignored.
+    swc: [SWC-104]
+    smartbugs: unchecked_low_level_calls
+    shard: false
+
+  - id: denial_of_service
+    name: Denial of Service
+    description: Unbounded loops, failing external calls, or griefing that blocks contract functionality.
+    swc: [SWC-113, SWC-128]
+    smartbugs: denial_of_service
+    shard: false
+
+  - id: bad_randomness
+    name: Bad Randomness
+    description: On-chain predictable values (blockhash, timestamp) used as randomness.
+    swc: [SWC-120]
+    smartbugs: bad_randomness
+    shard: false
+
+  - id: time_manipulation
+    name: Time Manipulation
+    description: Critical logic depends on block.timestamp, which miners can skew.
+    swc: [SWC-116]
+    smartbugs: time_manipulation
+    shard: false
+
+  - id: front_running
+    name: Front-running
+    description: Transaction ordering dependence exploitable by observers of the mempool.
+    swc: [SWC-114]
+    smartbugs: front_running
+    shard: false
+
+  - id: short_addresses
+    name: Short Address
+    description: Malformed-calldata (short address) attack on token transfers.
+    swc: []
+    smartbugs: short_addresses
+    shard: false
+
+  - id: other
+    name: Other
+    description: Anything not fitting the categories above.
+    swc: []
+    smartbugs: other
+    shard: false

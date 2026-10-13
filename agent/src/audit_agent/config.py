@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     trace_dir: Path = Path("agent/.traces")
     qdrant_dir: Path = Path("agent/.qdrant_data")
     report_dir: Path = Path("reports")
+    taxonomy_path: Path = Path("knowledge/taxonomy.yaml")
 
 
 @lru_cache
