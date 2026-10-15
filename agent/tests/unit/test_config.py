@@ -19,3 +19,8 @@ def test_secret_not_leaked_in_repr(monkeypatch):
     monkeypatch.setenv("AUDIT_LLM_API_KEY", "sk-secret")
     s = Settings(_env_file=None)
     assert "sk-secret" not in repr(s)
+
+def test_path_override_via_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("AUDIT_REPORT_DIR", str(tmp_path / "out"))
+    s = Settings(_env_file=None)
+    assert s.report_dir == tmp_path / "out"
