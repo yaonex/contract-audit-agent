@@ -38,7 +38,7 @@ class PocAttempt(BaseModel):
     poc_source: str                           # generated Solidity test code
     outcome: PocOutcome
     error_summary: str = ""                   # extracted, size-bounded (see forge_runner, Phase 1.4)
-    log_path: str | None = None               # full forge output lives on disk
+    log_path: str | None = None               # path relative to the trace dir (see Tracer.write_blob)
     duration_s: float = Field(default=0.0, ge=0.0)
     integrity_checks: list[IntegrityCheck] = Field(default_factory=list)
 
