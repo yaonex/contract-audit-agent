@@ -72,7 +72,7 @@ class Probe:
 
 
 def check_basic(p: Probe) -> tuple[bool, str]:
-    r = p.chat([{"role": "user", "content": "Reply with the single word: pong"}], max_tokens=50)
+    r = p.chat([{"role": "user", "content": "Reply with the single word: pong"}], max_tokens=1000)
     ok = bool(r.content) and r.usage.prompt_tokens > 0 and r.usage.completion_tokens > 0
     return ok, f"content={r.content!r} usage=({r.usage.prompt_tokens}, {r.usage.completion_tokens})"
 
