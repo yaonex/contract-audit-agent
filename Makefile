@@ -22,3 +22,7 @@ index-kb:
 
 eval:
 	cd agent && uv run audit-agent eval --split dev
+
+verify-model:
+	@test -n "$(MODEL)" || (echo "usage: make verify-model MODEL=<model-name>"; exit 1)
+	$(AGENT) python scripts/verify_model.py --model $(MODEL)
