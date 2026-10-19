@@ -13,6 +13,8 @@ from pathlib import Path
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from audit_agent.llm.types import CacheMode
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -33,6 +35,10 @@ class Settings(BaseSettings):
     # quotes another currency. Prices change, so they live here, not in the model whitelist.
     llm_price_in_usd_per_mtok: float = 0.2
     llm_price_out_usd_per_mtok: float = 0.4
+
+    # --- Response cache (llm/cache.py) ---
+    # Default OFF: a cache must be switched on explicitly (eval scripts do). See CacheMode.
+    cache_mode: CacheMode = CacheMode.OFF
 
     # --- Budgets (hard limits per audit run, enforced in llm/cost.py) ---
     max_total_tokens: int = 200_000
