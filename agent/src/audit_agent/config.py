@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     llm_timeout_s: float = 60.0
     llm_max_retries: int = 2                 # transport retries, handled by the openai SDK
 
+    # --- Pricing (USD per 1M tokens), from the provider's pricing page ---
+    # None = unknown: token budget still enforced, USD budget cannot be. Convert if the page
+    # quotes another currency. Prices change, so they live here, not in the model whitelist.
+    llm_price_in_usd_per_mtok: float = 0.2
+    llm_price_out_usd_per_mtok: float = 0.4
+
     # --- Budgets (hard limits per audit run, enforced in llm/cost.py) ---
     max_total_tokens: int = 200_000
     max_cost_usd: float = 0.5

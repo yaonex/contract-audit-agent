@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field
 
 from audit_agent.config import Settings
 from audit_agent.llm.models import SupportedModel, require_supported
+from audit_agent.llm.cost import CostTracker
 from audit_agent.observability.tracer import SpanHandle, Tracer
 
 
@@ -60,6 +61,7 @@ class LLMClient:
         tracer: Tracer | None = None,
         sdk: Any | None = None,                    # injectable for tests
         model_info: SupportedModel | None = None,  # injectable: tests and verify_model.py
+        budget: CostTracker | None = None,  
     ) -> None:
         # Production path: the model must be on the whitelist, or we fail at startup.
         # Injection exists so unit tests can use fake model names and the admission script
@@ -73,6 +75,7 @@ class LLMClient:
         self.model_info = model_info
         self.model = settings.llm_model
         self._tracer = tracer
+        self._budget = budget
         if sdk is None:
             sdk = OpenAI(
                 base_url=settings.llm_base_url,
@@ -115,12 +118,22 @@ class LLMClient:
         )
         with span as sp:
             sp.set(model=self.model)
+            if self._budget:
+                self._budget.check()
             try:
                 response = self._sdk.chat.completions.create(**kwargs)
             except openai.OpenAIError as exc:
                 raise LLMError(f"{type(exc).__name__}: {exc}") from exc
 
             result = self._parse(response)
+            if self._budget:
+                # Failed calls are not recorded (nothing returned to count). Providers may
+                # still bill some failures; accepted for the MVP.
+                self._budget.record(
+                    result.usage,
+                    prompt_chars=len(json.dumps(messages, ensure_ascii=False, default=str)),
+                    completion_chars=len(result.content or "") + len(result.reasoning_content or ""),
+                )
             sp.set(
                 prompt_tokens=result.usage.prompt_tokens,
                 completion_tokens=result.usage.completion_tokens,

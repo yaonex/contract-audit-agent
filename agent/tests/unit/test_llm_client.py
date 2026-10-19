@@ -10,6 +10,7 @@ from audit_agent.config import Settings
 from audit_agent.llm.client import LLMClient, LLMError
 from audit_agent.llm.models import SupportedModel
 from audit_agent.observability.tracer import Tracer, read_events
+from audit_agent.llm.cost import BudgetExceeded, CostTracker
 
 
 class Boom(openai.OpenAIError):
@@ -45,13 +46,13 @@ def make_settings(**over) -> Settings:
     return Settings(_env_file=None, **{"llm_model": "fake-model", **over})  # type: ignore[call-arg]
 
 
-def make_client(sdk, *, tracer=None, settings=None) -> LLMClient:
+def make_client(sdk, *, tracer=None, settings=None, budget=None) -> LLMClient:
     settings = settings or make_settings()
     info = SupportedModel(
         name=settings.llm_model, parallel_tools=False,
         reasoning_content=False, verified_on=date(2026, 1, 1),
     )
-    return LLMClient(settings, tracer=tracer, sdk=sdk, model_info=info)
+    return LLMClient(settings, tracer=tracer, sdk=sdk, model_info=info, budget=budget)
 
 
 def test_basic_parse():
@@ -122,3 +123,25 @@ def test_failed_call_is_traced_as_error(tmp_path):
     with pytest.raises(LLMError):
         make_client(FakeSDK(exc=Boom("down")), tracer=tracer).chat([])
     assert read_events(tracer.path)[0].status == "error"
+
+def test_usage_is_recorded_into_budget():
+    t = CostTracker(max_total_tokens=1000, max_cost_usd=1.0)
+    make_client(FakeSDK(fake_response(usage=(10, 5))), budget=t).chat([])
+    assert t.total_tokens == 15
+
+
+def test_exhausted_budget_blocks_call_before_hitting_the_api():
+    t = CostTracker(max_total_tokens=10, max_cost_usd=1.0)
+    sdk = FakeSDK(fake_response(usage=(10, 5)))
+    client = make_client(sdk, budget=t)
+    client.chat([])                       # first call passes and overshoots to 15
+    with pytest.raises(BudgetExceeded):
+        client.chat([])
+    assert len(sdk.calls) == 1            # second call never reached the SDK
+
+
+def test_failed_call_is_not_charged():
+    t = CostTracker(max_total_tokens=1000, max_cost_usd=1.0)
+    with pytest.raises(LLMError):
+        make_client(FakeSDK(exc=Boom("down")), budget=t).chat([])
+    assert t.total_tokens == 0
