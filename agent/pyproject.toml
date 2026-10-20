@@ -2,7 +2,7 @@
 name = "audit-agent"
 version = "0.1.0"
 description = "Smart contract security audit agent"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "langgraph==1.2.14",
     "openai>=1.40",
