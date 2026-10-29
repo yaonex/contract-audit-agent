@@ -28,3 +28,6 @@ def test_path_override_via_env(monkeypatch, tmp_path):
 def test_cache_is_off_by_default():
     from audit_agent.llm.types import CacheMode
     assert Settings(_env_file=None).cache_mode == CacheMode.OFF  # type: ignore[call-arg]
+
+def test_agent_timeout_default():
+    assert Settings(_env_file=None).agent_timeout_s == 300.0  # type: ignore[call-arg]

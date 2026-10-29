@@ -5,7 +5,7 @@ from audit_agent.llm.cache import ReplayMiss, make_cache_key
 from audit_agent.llm.client import LLMError
 from audit_agent.llm.cost import BudgetExceeded
 from audit_agent.llm.structured import (
-    OutputTruncated, ScanReport, StructuredOutputError, iter_candidates, structured_chat,
+    OutputTruncated, ScanReport, StructuredOutputError, iter_candidates, structured_chat, ParseFailure, ParseSuccess, parse_reply
 )
 from audit_agent.llm.types import ChatResult
 from audit_agent.observability.tracer import Tracer, read_events
@@ -280,3 +280,17 @@ def test_trace_keeps_the_last_problem_on_failure(tmp_path):
     (e,) = read_events(tracer.path)
     assert e.status == "error"
     assert "no JSON object" in e.attrs["last_problem"]
+
+def test_parse_reply_success_reports_layer_and_counts():
+    r = parse_reply('{"x": 1, "y": 2} and {"x": 3, "y": 4}', Point)
+    assert isinstance(r, ParseSuccess)
+    assert (r.value, r.layer, r.candidates_checked, r.extra_candidates) == (
+        Point(x=1, y=2), "text", 1, 1,
+    )
+
+
+def test_parse_reply_failure_explains_why():
+    r = parse_reply("", Point)
+    assert isinstance(r, ParseFailure) and "empty" in r.problem
+    r = parse_reply('{"x": "no", "y": 2}', Point)
+    assert isinstance(r, ParseFailure) and "x:" in r.problem and r.candidates_checked == 1

@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     max_total_tokens: int = 200_000
     max_cost_usd: float = 0.5
     max_tool_rounds: int = 8
+    agent_timeout_s: float = 300.0   # total wall-clock limit of one agent run; only checked BETWEEN calls
 
     # --- Paths (aligned with .gitignore; override via AUDIT_*_DIR / AUDIT_TAXONOMY_PATH) ---
     cache_dir: Path = Path("agent/.cache/llm")

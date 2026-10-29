@@ -5,6 +5,8 @@ Design notes:
 - Parent/child span links via contextvars (no manual plumbing).
 - Large payloads (full prompts, forge logs) go to blob files; events store paths only.
 - Tracing must never break the audit: write failures are logged, not raised.
+- A span is "error" when the block raises OR when the block calls handle.fail(): the latter is
+  for failures the caller handles without raising (e.g. a tool crashed, the agent goes on).
 """
 import itertools
 import json
@@ -36,7 +38,7 @@ class TraceEvent(BaseModel):
     run_id: str
     span_id: str
     parent_id: str | None = None
-    kind: str                       # "llm" | "tool" | "node" | ...
+    kind: str                       # "llm" | "tool" | "agent" | "structured" | ...
     name: str
     status: Literal["ok", "error"] = "ok"
     duration_ms: float
@@ -56,10 +58,15 @@ class SpanHandle:
     def __init__(self) -> None:
         self.fields: dict[str, Any] = {}
         self.attrs: dict[str, Any] = {}
+        self.error: str | None = None
 
     def set(self, **kwargs: Any) -> None:
         for key, value in kwargs.items():
             (self.fields if key in _TYPED_FIELDS else self.attrs)[key] = value
+
+    def fail(self, message: str) -> None:
+        """Mark the span as failed without raising."""
+        self.error = message[:_MAX_ERROR_CHARS]
 
 
 class Tracer:
@@ -88,6 +95,7 @@ class Tracer:
             raise
         finally:
             _current_span.reset(token)
+            error = error or handle.error   # a raised exception wins over fail()
             event = TraceEvent(
                 ts=datetime.now(UTC),
                 run_id=self.run_id,
@@ -105,6 +113,7 @@ class Tracer:
 
     def write_blob(self, name: str, text: str) -> str:
         """Save a large payload to disk. Returns a path relative to base_dir."""
+        # Whitelist WITHOUT '.', so ".." can never appear in a file name.
         safe = re.sub(r"[^A-Za-z0-9_-]", "_", name)[:60] or "blob"
         rel = Path(self.run_id) / "blobs" / f"{next(self._blob_seq):04d}_{safe}.txt"
         try:

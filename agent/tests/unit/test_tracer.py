@@ -90,3 +90,10 @@ def test_write_failure_does_not_break_caller(tmp_path):
     with t.span("tool", "x"):
         result = 1 + 1
     assert result == 2  # business code unaffected
+
+def test_fail_marks_the_span_as_error_without_raising(tmp_path):
+    t = make_tracer(tmp_path)
+    with t.span("tool", "x") as sp:
+        sp.fail("RuntimeError: boom")
+    e = read_events(t.path)[0]
+    assert (e.status, e.error) == ("error", "RuntimeError: boom")

@@ -6,8 +6,10 @@ varies (and often fails silently). Pydantic validation + retry works for every m
 Pipeline for one reply:
   1. iter_candidates() lazily yields JSON objects found in the text. It only PRODUCES
      candidates; it never decides what is correct.
-  2. structured_chat() validates candidates one by one and returns the FIRST valid one.
+  2. parse_reply() validates candidates one by one and returns the FIRST valid one.
      The Pydantic schema is the final judge: a Solidity snippet can never pass it.
+  3. structured_chat() wraps that in a retry loop for a plain "ask once, fix until valid" call;
+     agents/base.py reuses parse_reply() for the final answer of a tool-calling run.
 
 Extraction rules:
 - Sources, in priority order: code blocks labelled `json` or unlabelled, then the whole text.
@@ -119,6 +121,20 @@ class ScanReport:
             self.parse_error = f"invalid JSON: {exc.msg} (line {exc.lineno}, column {exc.colno})"
 
 
+@dataclass(frozen=True)
+class ParseSuccess[T: BaseModel]:
+    value: T
+    layer: str
+    candidates_checked: int
+    extra_candidates: int
+
+
+@dataclass(frozen=True)
+class ParseFailure:
+    problem: str            # text that is safe to feed back to the model
+    candidates_checked: int
+
+
 def _is_answer_block(lang: str) -> bool:
     return lang.strip().lower() in _ANSWER_LANGS
 
@@ -165,18 +181,50 @@ def format_validation_errors(exc: ValidationError) -> str:
     return "\n".join(lines)[:_MAX_FEEDBACK_CHARS]
 
 
-def _feedback_turns(previous: ChatResult, problem: str) -> list[dict[str, Any]]:
-    # Only `content` goes back: reasoning_content must never be replayed into history.
+def parse_reply[T: BaseModel](text: str, schema: type[T]) -> ParseSuccess[T] | ParseFailure:
+    """Find the first candidate object in `text` that validates against `schema`."""
+    report = ScanReport()
+    candidates = iter_candidates(text, report)
+    first_error: ValidationError | None = None
+    checked = 0
+    for cand in candidates:
+        checked += 1
+        try:
+            value = schema.model_validate(cand.obj)
+        except ValidationError as exc:
+            if first_error is None:
+                first_error = exc
+            continue
+        # Observability only: how many more candidates the reply held. Does not affect the
+        # result. A frequently non-zero value means the prompt is loose.
+        extra = sum(1 for _ in candidates)
+        return ParseSuccess(value, cand.layer, checked, extra)
+
+    if first_error is not None:
+        problem = format_validation_errors(first_error)
+    elif not text.strip():
+        problem = "the reply was empty"
+    else:
+        problem = report.parse_error or "no JSON object found in the reply"
+    return ParseFailure(problem, checked)
+
+
+def feedback_user_message(problem: str) -> dict[str, Any]:
+    return {
+        "role": "user",
+        "content": (
+            "Your previous reply could not be used.\n"
+            f"Problems:\n{problem}\n\n"
+            "Reply again with ONE corrected JSON object only: no explanation, no code fences."
+        ),
+    }
+
+
+def feedback_messages(content: str | None, problem: str) -> list[dict[str, Any]]:
+    # Only `content` goes back: reasoning_content must never be replayed into history here.
     return [
-        {"role": "assistant", "content": previous.content or "(empty reply)"},
-        {
-            "role": "user",
-            "content": (
-                "Your previous reply could not be used.\n"
-                f"Problems:\n{problem}\n\n"
-                "Reply again with ONE corrected JSON object only: no explanation, no code fences."
-            ),
-        },
+        {"role": "assistant", "content": content or "(empty reply)"},
+        feedback_user_message(problem),
     ]
 
 
@@ -231,33 +279,18 @@ def structured_chat[T: BaseModel](
                 continue
             last_truncated = False
 
-            text = result.content or ""
-            report = ScanReport()
-            candidates = iter_candidates(text, report)
-            first_error: ValidationError | None = None
-            checked = 0
-            for cand in candidates:
-                checked += 1
-                try:
-                    value = schema.model_validate(cand.obj)
-                except ValidationError as exc:
-                    if first_error is None:
-                        first_error = exc
-                    continue
-                # Observability only: how many more candidates the reply held. Does not
-                # affect the result. A frequently non-zero value means the prompt is loose.
-                extra = sum(1 for _ in candidates)
-                sp.set(layer=cand.layer, candidates_checked=checked, extra_candidates=extra)
-                return StructuredResult(value, attempt, cand.layer)
+            parsed = parse_reply(result.content or "", schema)
+            if isinstance(parsed, ParseSuccess):
+                sp.set(
+                    layer=parsed.layer,
+                    candidates_checked=parsed.candidates_checked,
+                    extra_candidates=parsed.extra_candidates,
+                )
+                return StructuredResult(parsed.value, attempt, parsed.layer)
 
-            if first_error is not None:
-                last_problem = format_validation_errors(first_error)
-            elif not text.strip():
-                last_problem = "the reply was empty"
-            else:
-                last_problem = report.parse_error or "no JSON object found in the reply"
-            sp.set(last_problem=last_problem, candidates_checked=checked)
-            convo = [*base, *_feedback_turns(result, last_problem)]
+            last_problem = parsed.problem
+            sp.set(last_problem=last_problem, candidates_checked=parsed.candidates_checked)
+            convo = [*base, *feedback_messages(result.content, last_problem)]
 
         error_cls = OutputTruncated if last_truncated else StructuredOutputError
         raise error_cls(
