@@ -1,0 +1,50 @@
+Traceback (most recent call last):
+  File "/HOME/.local/share/uv/tools/slither-analyzer/lib/python3.12/site-packages/crytic_compile/platform/solc.py", line 639, in _run_solc
+    ret: dict = json.loads(stdout)
+                ^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/HOME/.local/bin/slither", line 10, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/HOME/.local/share/uv/tools/slither-analyzer/lib/python3.12/site-packages/slither/__main__.py", line 815, in main
+    main_impl(all_detector_classes=detectors, all_printer_classes=printers)
+  File "/HOME/.local/share/uv/tools/slither-analyzer/lib/python3.12/site-packages/slither/__main__.py", line 936, in main_impl
+    ) = process_all(filename, args, detector_classes, printer_classes)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/HOME/.local/share/uv/tools/slither-analyzer/lib/python3.12/site-packages/slither/__main__.py", line 100, in process_all
+    compilations = compile_all(target, **vars(args))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/HOME/.local/share/uv/tools/slither-analyzer/lib/python3.12/site-packages/crytic_compile/crytic_compile.py", line 870, in compile_all
+    compilations.append(CryticCompile(target, **kwargs))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/HOME/.local/share/uv/tools/slither-analyzer/lib/python3.12/site-packages/crytic_compile/crytic_compile.py", line 279, in __init__
+    self._compile(**kwargs)
+  File "/HOME/.local/share/uv/tools/slither-analyzer/lib/python3.12/site-packages/crytic_compile/crytic_compile.py", line 725, in _compile
+    self._platform.compile(self, **kwargs)
+  File "/HOME/.local/share/uv/tools/slither-analyzer/lib/python3.12/site-packages/crytic_compile/platform/solc.py", line 195, in compile
+    targets_json = _get_targets_json(compilation_unit, self._target, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/HOME/.local/share/uv/tools/slither-analyzer/lib/python3.12/site-packages/crytic_compile/platform/solc.py", line 324, in _get_targets_json
+    return _run_solc(
+           ^^^^^^^^^^
+  File "/HOME/.local/share/uv/tools/slither-analyzer/lib/python3.12/site-packages/crytic_compile/platform/solc.py", line 642, in _run_solc
+    raise InvalidCompilation(f"Invalid solc compilation {stderr}")
+crytic_compile.platform.exceptions.InvalidCompilation: Invalid solc compilation Error: Expected type name
+ --> Broken.sol:2:26:
+  |
+2 | contract X { function f( }
+  |                          ^
+
+

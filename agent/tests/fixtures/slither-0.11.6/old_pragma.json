@@ -1,0 +1,44 @@
+{
+  "success": true,
+  "error": null,
+  "results": {
+    "detectors": [
+      {
+        "elements": [
+          {
+            "type": "pragma",
+            "name": "0.8.19",
+            "source_mapping": {
+              "start": 32,
+              "length": 23,
+              "filename_relative": "Old.sol",
+              "filename_absolute": "/WORK/Old.sol",
+              "filename_short": "Old.sol",
+              "is_dependency": false,
+              "lines": [
+                2
+              ],
+              "starting_column": 1,
+              "ending_column": 24
+            },
+            "type_specific_fields": {
+              "directive": [
+                "solidity",
+                "0.8",
+                ".19"
+              ]
+            }
+          }
+        ],
+        "description": "Version constraint 0.8.19 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- VerbatimInvalidDeduplication\n\t- FullInlinerNonExpressionSplitArgumentEvaluationOrder\n\t- MissingSideEffectsOnSelectorAccess.\nIt is used by:\n\t- 0.8.19 (Old.sol#2)\n",
+        "markdown": "Version constraint 0.8.19 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- VerbatimInvalidDeduplication\n\t- FullInlinerNonExpressionSplitArgumentEvaluationOrder\n\t- MissingSideEffectsOnSelectorAccess.\nIt is used by:\n\t- [0.8.19](Old.sol#L2)\n",
+        "first_markdown_element": "Old.sol#L2",
+        "id": "b15d0d640bf674dff562beb964cc4b3b505437c4605450e3d39405727309080a",
+        "check": "solc-version",
+        "impact": "Informational",
+        "confidence": "High",
+        "reference": "https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity"
+      }
+    ]
+  }
+}

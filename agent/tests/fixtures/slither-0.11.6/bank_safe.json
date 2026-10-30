@@ -1,0 +1,155 @@
+{
+  "success": true,
+  "error": null,
+  "results": {
+    "detectors": [
+      {
+        "elements": [
+          {
+            "type": "function",
+            "name": "withdraw",
+            "source_mapping": {
+              "start": 219,
+              "length": 258,
+              "filename_relative": "../../ROOT/samples/safe/Bank.sol",
+              "filename_absolute": "/ROOT/samples/safe/Bank.sol",
+              "filename_short": "../../ROOT/samples/safe/Bank.sol",
+              "is_dependency": false,
+              "lines": [
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "starting_column": 5,
+              "ending_column": 6
+            },
+            "type_specific_fields": {
+              "parent": {
+                "type": "contract",
+                "name": "Bank",
+                "source_mapping": {
+                  "start": 57,
+                  "length": 422,
+                  "filename_relative": "../../ROOT/samples/safe/Bank.sol",
+                  "filename_absolute": "/ROOT/samples/safe/Bank.sol",
+                  "filename_short": "../../ROOT/samples/safe/Bank.sol",
+                  "is_dependency": false,
+                  "lines": [
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19
+                  ],
+                  "starting_column": 1,
+                  "ending_column": 0
+                }
+              },
+              "signature": "withdraw()"
+            }
+          },
+          {
+            "type": "node",
+            "name": "(ok,None) = msg.sender.call{value: amount}()",
+            "source_mapping": {
+              "start": 382,
+              "length": 48,
+              "filename_relative": "../../ROOT/samples/safe/Bank.sol",
+              "filename_absolute": "/ROOT/samples/safe/Bank.sol",
+              "filename_short": "../../ROOT/samples/safe/Bank.sol",
+              "is_dependency": false,
+              "lines": [
+                15
+              ],
+              "starting_column": 9,
+              "ending_column": 57
+            },
+            "type_specific_fields": {
+              "parent": {
+                "type": "function",
+                "name": "withdraw",
+                "source_mapping": {
+                  "start": 219,
+                  "length": 258,
+                  "filename_relative": "../../ROOT/samples/safe/Bank.sol",
+                  "filename_absolute": "/ROOT/samples/safe/Bank.sol",
+                  "filename_short": "../../ROOT/samples/safe/Bank.sol",
+                  "is_dependency": false,
+                  "lines": [
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17
+                  ],
+                  "starting_column": 5,
+                  "ending_column": 6
+                },
+                "type_specific_fields": {
+                  "parent": {
+                    "type": "contract",
+                    "name": "Bank",
+                    "source_mapping": {
+                      "start": 57,
+                      "length": 422,
+                      "filename_relative": "../../ROOT/samples/safe/Bank.sol",
+                      "filename_absolute": "/ROOT/samples/safe/Bank.sol",
+                      "filename_short": "../../ROOT/samples/safe/Bank.sol",
+                      "is_dependency": false,
+                      "lines": [
+                        4,
+                        5,
+                        6,
+                        7,
+                        8,
+                        9,
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
+                        17,
+                        18,
+                        19
+                      ],
+                      "starting_column": 1,
+                      "ending_column": 0
+                    }
+                  },
+                  "signature": "withdraw()"
+                }
+              }
+            }
+          }
+        ],
+        "description": "Low level call in Bank.withdraw() (../../ROOT/samples/safe/Bank.sol#11-17):\n\t- (ok,None) = msg.sender.call{value: amount}() (../../ROOT/samples/safe/Bank.sol#15)\n",
+        "markdown": "Low level call in [Bank.withdraw()](../../ROOT/samples/safe/Bank.sol#L11-L17):\n\t- [(ok,None) = msg.sender.call{value: amount}()](../../ROOT/samples/safe/Bank.sol#L15)\n",
+        "first_markdown_element": "../../ROOT/samples/safe/Bank.sol#L11-L17",
+        "id": "737dd0dfbb29d6cb392bbe516e0eb2037feb1b7133b13a1f2c1c859efac21c90",
+        "check": "low-level-calls",
+        "impact": "Informational",
+        "confidence": "High",
+        "reference": "https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls"
+      }
+    ]
+  }
+}

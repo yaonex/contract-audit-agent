@@ -57,3 +57,8 @@ def test_draft_does_not_accept_status_from_llm():
     # Extra keys are ignored, so an LLM-supplied "status" cannot leak in.
     d = FindingDraft.model_validate({**make_draft().model_dump(), "status": "confirmed"})
     assert not hasattr(d, "status")
+
+def test_rule_id_defaults_to_none_and_is_not_part_of_the_llm_contract():
+    f = Finding.from_draft(make_draft(), FindingSource.DISCOVERER)
+    assert f.rule_id is None
+    assert "rule_id" not in FindingDraft.model_fields

@@ -1,3 +1,5 @@
+import pytest
+
 from audit_agent.config import Settings
 
 
@@ -31,3 +33,9 @@ def test_cache_is_off_by_default():
 
 def test_agent_timeout_default():
     assert Settings(_env_file=None).agent_timeout_s == 300.0  # type: ignore[call-arg]
+
+def test_static_analysis_defaults():
+    s = Settings(_env_file=None)  # type: ignore[call-arg]
+    assert (s.slither_path, s.slither_min_impact) == ("slither", "low")
+    with pytest.raises(ValueError):
+        Settings(_env_file=None, slither_min_impact="critical")  # type: ignore[call-arg]

@@ -1,0 +1,386 @@
+{
+  "success": true,
+  "error": null,
+  "results": {
+    "detectors": [
+      {
+        "elements": [
+          {
+            "type": "function",
+            "name": "withdraw",
+            "source_mapping": {
+              "start": 219,
+              "length": 258,
+              "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+              "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+              "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+              "is_dependency": false,
+              "lines": [
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "starting_column": 5,
+              "ending_column": 6
+            },
+            "type_specific_fields": {
+              "parent": {
+                "type": "contract",
+                "name": "Bank",
+                "source_mapping": {
+                  "start": 57,
+                  "length": 422,
+                  "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+                  "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+                  "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+                  "is_dependency": false,
+                  "lines": [
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19
+                  ],
+                  "starting_column": 1,
+                  "ending_column": 0
+                }
+              },
+              "signature": "withdraw()"
+            }
+          },
+          {
+            "type": "node",
+            "name": "(ok,None) = msg.sender.call{value: amount}()",
+            "source_mapping": {
+              "start": 348,
+              "length": 48,
+              "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+              "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+              "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+              "is_dependency": false,
+              "lines": [
+                14
+              ],
+              "starting_column": 9,
+              "ending_column": 57
+            },
+            "type_specific_fields": {
+              "parent": {
+                "type": "function",
+                "name": "withdraw",
+                "source_mapping": {
+                  "start": 219,
+                  "length": 258,
+                  "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+                  "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+                  "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+                  "is_dependency": false,
+                  "lines": [
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17
+                  ],
+                  "starting_column": 5,
+                  "ending_column": 6
+                },
+                "type_specific_fields": {
+                  "parent": {
+                    "type": "contract",
+                    "name": "Bank",
+                    "source_mapping": {
+                      "start": 57,
+                      "length": 422,
+                      "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+                      "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+                      "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+                      "is_dependency": false,
+                      "lines": [
+                        4,
+                        5,
+                        6,
+                        7,
+                        8,
+                        9,
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
+                        17,
+                        18,
+                        19
+                      ],
+                      "starting_column": 1,
+                      "ending_column": 0
+                    }
+                  },
+                  "signature": "withdraw()"
+                }
+              }
+            },
+            "additional_fields": {
+              "underlying_type": "external_calls"
+            }
+          },
+          {
+            "type": "node",
+            "name": "balances[msg.sender] = 0",
+            "source_mapping": {
+              "start": 446,
+              "length": 24,
+              "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+              "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+              "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+              "is_dependency": false,
+              "lines": [
+                16
+              ],
+              "starting_column": 9,
+              "ending_column": 33
+            },
+            "type_specific_fields": {
+              "parent": {
+                "type": "function",
+                "name": "withdraw",
+                "source_mapping": {
+                  "start": 219,
+                  "length": 258,
+                  "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+                  "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+                  "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+                  "is_dependency": false,
+                  "lines": [
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17
+                  ],
+                  "starting_column": 5,
+                  "ending_column": 6
+                },
+                "type_specific_fields": {
+                  "parent": {
+                    "type": "contract",
+                    "name": "Bank",
+                    "source_mapping": {
+                      "start": 57,
+                      "length": 422,
+                      "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+                      "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+                      "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+                      "is_dependency": false,
+                      "lines": [
+                        4,
+                        5,
+                        6,
+                        7,
+                        8,
+                        9,
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
+                        17,
+                        18,
+                        19
+                      ],
+                      "starting_column": 1,
+                      "ending_column": 0
+                    }
+                  },
+                  "signature": "withdraw()"
+                }
+              }
+            },
+            "additional_fields": {
+              "underlying_type": "variables_written",
+              "variable_name": "balances"
+            }
+          }
+        ],
+        "description": "Reentrancy in Bank.withdraw() (../../ROOT/samples/vulnerable/Bank.sol#11-17):\n\tExternal calls:\n\t- (ok,None) = msg.sender.call{value: amount}() (../../ROOT/samples/vulnerable/Bank.sol#14)\n\tState variables written after the call(s):\n\t- balances[msg.sender] = 0 (../../ROOT/samples/vulnerable/Bank.sol#16)\n\tBank.balances (../../ROOT/samples/vulnerable/Bank.sol#5) can be used in cross function reentrancies:\n\t- Bank.balances (../../ROOT/samples/vulnerable/Bank.sol#5)\n\t- Bank.deposit() (../../ROOT/samples/vulnerable/Bank.sol#7-9)\n\t- Bank.withdraw() (../../ROOT/samples/vulnerable/Bank.sol#11-17)\n",
+        "markdown": "Reentrancy in [Bank.withdraw()](../../ROOT/samples/vulnerable/Bank.sol#L11-L17):\n\tExternal calls:\n\t- [(ok,None) = msg.sender.call{value: amount}()](../../ROOT/samples/vulnerable/Bank.sol#L14)\n\tState variables written after the call(s):\n\t- [balances[msg.sender] = 0](../../ROOT/samples/vulnerable/Bank.sol#L16)\n\t[Bank.balances](../../ROOT/samples/vulnerable/Bank.sol#L5) can be used in cross function reentrancies:\n\t- [Bank.balances](../../ROOT/samples/vulnerable/Bank.sol#L5)\n\t- [Bank.deposit()](../../ROOT/samples/vulnerable/Bank.sol#L7-L9)\n\t- [Bank.withdraw()](../../ROOT/samples/vulnerable/Bank.sol#L11-L17)\n",
+        "first_markdown_element": "../../ROOT/samples/vulnerable/Bank.sol#L11-L17",
+        "id": "95ea51475d005d025d0aba8c9239b0e10e0568b49e5b755edb0b53e9d5365a6f",
+        "check": "reentrancy-eth",
+        "impact": "High",
+        "confidence": "Medium",
+        "reference": "https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-1"
+      },
+      {
+        "elements": [
+          {
+            "type": "function",
+            "name": "withdraw",
+            "source_mapping": {
+              "start": 219,
+              "length": 258,
+              "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+              "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+              "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+              "is_dependency": false,
+              "lines": [
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17
+              ],
+              "starting_column": 5,
+              "ending_column": 6
+            },
+            "type_specific_fields": {
+              "parent": {
+                "type": "contract",
+                "name": "Bank",
+                "source_mapping": {
+                  "start": 57,
+                  "length": 422,
+                  "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+                  "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+                  "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+                  "is_dependency": false,
+                  "lines": [
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19
+                  ],
+                  "starting_column": 1,
+                  "ending_column": 0
+                }
+              },
+              "signature": "withdraw()"
+            }
+          },
+          {
+            "type": "node",
+            "name": "(ok,None) = msg.sender.call{value: amount}()",
+            "source_mapping": {
+              "start": 348,
+              "length": 48,
+              "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+              "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+              "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+              "is_dependency": false,
+              "lines": [
+                14
+              ],
+              "starting_column": 9,
+              "ending_column": 57
+            },
+            "type_specific_fields": {
+              "parent": {
+                "type": "function",
+                "name": "withdraw",
+                "source_mapping": {
+                  "start": 219,
+                  "length": 258,
+                  "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+                  "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+                  "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+                  "is_dependency": false,
+                  "lines": [
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17
+                  ],
+                  "starting_column": 5,
+                  "ending_column": 6
+                },
+                "type_specific_fields": {
+                  "parent": {
+                    "type": "contract",
+                    "name": "Bank",
+                    "source_mapping": {
+                      "start": 57,
+                      "length": 422,
+                      "filename_relative": "../../ROOT/samples/vulnerable/Bank.sol",
+                      "filename_absolute": "/ROOT/samples/vulnerable/Bank.sol",
+                      "filename_short": "../../ROOT/samples/vulnerable/Bank.sol",
+                      "is_dependency": false,
+                      "lines": [
+                        4,
+                        5,
+                        6,
+                        7,
+                        8,
+                        9,
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
+                        17,
+                        18,
+                        19
+                      ],
+                      "starting_column": 1,
+                      "ending_column": 0
+                    }
+                  },
+                  "signature": "withdraw()"
+                }
+              }
+            }
+          }
+        ],
+        "description": "Low level call in Bank.withdraw() (../../ROOT/samples/vulnerable/Bank.sol#11-17):\n\t- (ok,None) = msg.sender.call{value: amount}() (../../ROOT/samples/vulnerable/Bank.sol#14)\n",
+        "markdown": "Low level call in [Bank.withdraw()](../../ROOT/samples/vulnerable/Bank.sol#L11-L17):\n\t- [(ok,None) = msg.sender.call{value: amount}()](../../ROOT/samples/vulnerable/Bank.sol#L14)\n",
+        "first_markdown_element": "../../ROOT/samples/vulnerable/Bank.sol#L11-L17",
+        "id": "4144e6e8e7d3c664e06010cfd8d0d7f6ccb5006aebbaa1daf9894f587d4bc8ad",
+        "check": "low-level-calls",
+        "impact": "Informational",
+        "confidence": "High",
+        "reference": "https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls"
+      }
+    ]
+  }
+}

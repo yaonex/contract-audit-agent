@@ -1,11 +1,11 @@
-# Vulnerability taxonomy: drives Discoverer sharding and RAG payload filters.
-# Discoverer 分片（每类一个 prompt）
-# RAG 的 payload 过滤
-# 评测的分类别统计
-# 数据集标签映射（SmartBugs 的标签名和我们的不一样）
 version: 1
 # shard: true  -> this category gets a dedicated Discoverer (Phase 1.4)
-# smartbugs:   -> label used by SmartBugs Curated (null = not in that dataset)
+# smartbugs:   -> label used by SmartBugs Curated (null = not in that dataset; verify when the dataset is downloaded)
+# slither_detectors: -> Slither `check` names mapped to this category. Rule: list a detector ONLY if
+#     it means the SAME thing as the category; every other detector falls back to `other`.
+#     Reason: a wrong mapping makes the evaluation count an unrelated finding as a hit
+#     (e.g. `missing-zero-check` sits on the same lines as a missing owner check but is not one).
+#     Names must exist in the checked-in detector list, see tests/unit/test_taxonomy.py.
 categories:
   - id: reentrancy
     name: Reentrancy
@@ -13,6 +13,13 @@ categories:
     swc: [SWC-107]
     smartbugs: reentrancy
     shard: true
+    slither_detectors:
+      - reentrancy-eth
+      - reentrancy-no-eth
+      - reentrancy-balance
+      - reentrancy-benign
+      - reentrancy-events
+      - reentrancy-unlimited-gas
 
   - id: access_control
     name: Access Control
@@ -20,6 +27,12 @@ categories:
     swc: [SWC-105, SWC-106, SWC-115]
     smartbugs: access_control
     shard: true
+    slither_detectors:
+      - suicidal
+      - protected-vars
+      - unprotected-upgrade
+      - tx-origin
+      - arbitrary-send-eth
 
   - id: oracle_manipulation
     name: Oracle / Price Manipulation
@@ -34,6 +47,9 @@ categories:
     swc: [SWC-101]
     smartbugs: arithmetic
     shard: true
+    slither_detectors:
+      - divide-before-multiply
+      - incorrect-exp
 
   - id: business_logic
     name: Business Logic
@@ -48,6 +64,9 @@ categories:
     swc: [SWC-104]
     smartbugs: unchecked_low_level_calls
     shard: false
+    slither_detectors:
+      - unchecked-lowlevel
+      - unchecked-send
 
   - id: denial_of_service
     name: Denial of Service
@@ -55,6 +74,8 @@ categories:
     swc: [SWC-113, SWC-128]
     smartbugs: denial_of_service
     shard: false
+    slither_detectors:
+      - calls-loop
 
   - id: bad_randomness
     name: Bad Randomness
@@ -62,6 +83,8 @@ categories:
     swc: [SWC-120]
     smartbugs: bad_randomness
     shard: false
+    slither_detectors:
+      - weak-prng
 
   - id: time_manipulation
     name: Time Manipulation
@@ -69,6 +92,8 @@ categories:
     swc: [SWC-116]
     smartbugs: time_manipulation
     shard: false
+    slither_detectors:
+      - timestamp
 
   - id: front_running
     name: Front-running
@@ -86,7 +111,7 @@ categories:
 
   - id: other
     name: Other
-    description: Anything not fitting the categories above.
+    description: Anything not fitting the categories above. Also the fallback for every unmapped Slither detector.
     swc: []
     smartbugs: other
     shard: false

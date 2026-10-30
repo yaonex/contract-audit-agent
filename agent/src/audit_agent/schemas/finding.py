@@ -75,6 +75,7 @@ class Finding(FindingDraft):
     id: str = Field(default_factory=lambda: uuid4().hex[:12])
     status: FindingStatus = FindingStatus.CANDIDATE
     source: FindingSource = FindingSource.DISCOVERER
+    rule_id: str | None = None   # tool rule that produced it (Slither `check`); None for LLM findings
 
     @classmethod
     def from_draft(cls, draft: FindingDraft, source: FindingSource) -> "Finding":

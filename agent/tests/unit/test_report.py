@@ -1,5 +1,5 @@
 from audit_agent.schemas.finding import CodeLocation, Finding, FindingDraft, FindingSource, Severity
-from audit_agent.schemas.report import AuditReport, CostSummary, RunMeta
+from audit_agent.schemas.report import AuditReport, CostSummary, RunMeta, StaticAnalysisStatus
 
 
 def make_finding() -> Finding:
@@ -30,3 +30,12 @@ def test_json_roundtrip():
     )
     restored = AuditReport.model_validate_json(report.model_dump_json())
     assert restored == report
+
+
+def test_static_analysis_defaults_to_not_run_and_roundtrips():
+    report = AuditReport(
+        meta=RunMeta(model="m", prompt_version="v1", tool_versions={"slither": "0.11.6"}),
+        target="A.sol",
+    )
+    assert report.static_analysis.status == StaticAnalysisStatus.NOT_RUN
+    assert AuditReport.model_validate_json(report.model_dump_json()) == report

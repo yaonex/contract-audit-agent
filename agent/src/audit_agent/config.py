@@ -9,6 +9,7 @@ Design notes:
 """
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -26,15 +27,9 @@ class Settings(BaseSettings):
     # --- LLM (OpenAI-compatible endpoint) ---
     llm_base_url: str = "https://api.deepseek.com"
     llm_api_key: SecretStr = SecretStr("")   # SecretStr: never printed or logged by accident
-    llm_model: str = "deepseek-flash"         # must be listed in llm/models.py SUPPORTED_MODELS
+    llm_model: str = "deepseek-flash"        # must be listed in llm/models.py SUPPORTED_MODELS
     llm_timeout_s: float = 60.0
     llm_max_retries: int = 2                 # transport retries, handled by the openai SDK
-
-    # --- Pricing (USD per 1M tokens), from the provider's pricing page ---
-    # None = unknown: token budget still enforced, USD budget cannot be. Convert if the page
-    # quotes another currency. Prices change, so they live here, not in the model whitelist.
-    llm_price_in_usd_per_mtok: float = 0.2
-    llm_price_out_usd_per_mtok: float = 0.4
 
     # --- Response cache (llm/cache.py) ---
     # Default OFF: a cache must be switched on explicitly (eval scripts do). See CacheMode.
@@ -45,6 +40,25 @@ class Settings(BaseSettings):
     max_cost_usd: float = 0.5
     max_tool_rounds: int = 8
     agent_timeout_s: float = 300.0   # total wall-clock limit of one agent run; only checked BETWEEN calls
+
+    # --- Pricing (USD per 1M tokens), from the provider's pricing page ---
+    # None = unknown: token budget still enforced, USD budget cannot be. Convert if the page
+    # quotes another currency. Prices change, so they live here, not in the model whitelist.
+    llm_price_in_usd_per_mtok: float | None = None
+    llm_price_out_usd_per_mtok: float | None = None
+
+    # --- Static analysis (static_analysis/slither_runner.py) ---
+    # Slither is a PROJECT dependency (pyproject, pinned). A bare name is looked up in the
+    # project's virtualenv first, then on PATH. A value with a "/" is used as given.
+    slither_path: str = "slither"
+    slither_timeout_s: float = 120.0    # a guess: Slither needed ~1 s on the samples
+    # Findings below this impact are dropped when parsing (the raw JSON keeps everything).
+    # "optimization" results are never kept: they are not security findings.
+    slither_min_impact: Literal["informational", "low", "medium", "high"] = "low"
+    # Pins the solc version for every run (passed as SOLC_VERSION) and is what
+    # `make setup-solc` installs. Without it solc-select's global selection applies: hidden
+    # state. Empty string means "not set".
+    solc_version: str | None = None
 
     # --- Paths (aligned with .gitignore; override via AUDIT_*_DIR / AUDIT_TAXONOMY_PATH) ---
     cache_dir: Path = Path("agent/.cache/llm")

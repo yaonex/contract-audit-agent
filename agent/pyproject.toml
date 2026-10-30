@@ -15,9 +15,10 @@ dependencies = [
     "tenacity>=8.3",
     "jinja2>=3.1",
     "pyyaml>=6.0",
-    "slither-analyzer>=0.10",
     "grpcio>=1.64",
     "grpcio-tools>=1.64",
+    "slither-analyzer==0.11.6",
+    "solc-select==1.2.0",
 ]
 
 [project.optional-dependencies]

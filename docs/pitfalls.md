@@ -54,6 +54,22 @@ LLM 可能把原合约复制一份并"改"成有漏洞的版本放进 PoC，然�
 - **失败原因选"最像 JSON 的那次尝试"。** 逐个尝试 `{` 会产生多个解析错误(比如 `struct {a, b}` 那种),反馈给模型的应该是解析走得最远的那个,而不是第一个。
 
 
+## solc-select 的状态目录取决于 VIRTUAL_ENV
+
+- **现象**:`uv run pytest` 里真实调用 Slither 报 `No solc version set`,手动运行正常;
+  `which -a` 显示有两份 solc。
+- **走过的弯路**:怀疑 PATH 上两份 solc 冲突,删了重复依赖,无效。又提出传 `SOLC_VERSION`,
+  同样无效。两个假设都没解释"两份安装报同样的错"这一事实。
+- **根因**:读 solc-select 源码(constants.py)发现:设了 `VIRTUAL_ENV` 时状态目录是
+  `$VIRTUAL_ENV/.solc-select`,否则是 `~/.solc-select`。`uv run` 会设置 `VIRTUAL_ENV`,
+  所以同一台机器上两种启动方式看到的是两份不同的状态。
+- **诊断方法**:对照实验,只增删这一个环境变量。之前的实验是在普通终端里做的,与运行环境
+  不一致,所以结论不可靠。
+- **解决**:Slither 与 solc-select 作为项目依赖(精确钉住);runner 启动子进程时显式设置
+  `VIRTUAL_ENV` 与 PATH;`make setup-solc` 把编译器装进项目环境;集成测试守住这一行为。
+- **局限**:依赖 solc-select 的内部实现(非公开接口),升级时由集成测试提示。
+
+
 
 
 
