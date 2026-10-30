@@ -26,3 +26,8 @@ eval:
 verify-model:
 	@test -n "$(MODEL)" || (echo "usage: make verify-model MODEL=<model-name>"; exit 1)
 	$(AGENT) python scripts/verify_model.py --model $(MODEL)
+
+check-tools:
+	@echo "uv:      $$(uv --version)"
+	@echo "slither: $$(slither --version)"
+	@echo "solc:    $$(solc --version | tail -n 1)"

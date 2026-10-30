@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.34;
 
-// Minimal vulnerable example: external call before state update.
-contract VulnerableVault {
+contract Bank {
     mapping(address => uint256) public balances;
 
     function deposit() external payable {
@@ -12,8 +11,8 @@ contract VulnerableVault {
     function withdraw() external {
         uint256 amount = balances[msg.sender];
         require(amount > 0, "no balance");
+        balances[msg.sender] = 0;
         (bool ok, ) = msg.sender.call{value: amount}("");
         require(ok, "transfer failed");
-        balances[msg.sender] = 0; // state updated after the external call
     }
 }
