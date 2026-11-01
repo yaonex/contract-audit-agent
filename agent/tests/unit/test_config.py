@@ -39,3 +39,11 @@ def test_static_analysis_defaults():
     assert (s.slither_path, s.slither_min_impact) == ("slither", "low")
     with pytest.raises(ValueError):
         Settings(_env_file=None, slither_min_impact="critical")  # type: ignore[call-arg]
+
+def test_context_budget_has_a_floor_that_matches_the_budget_module():
+    from audit_agent.context.budget import MIN_CONTEXT_TOKENS
+
+    assert Settings(_env_file=None).context_max_tokens == 20_000  # type: ignore[call-arg]
+    assert Settings(_env_file=None, context_max_tokens=MIN_CONTEXT_TOKENS).context_max_tokens == MIN_CONTEXT_TOKENS  # type: ignore[call-arg]
+    with pytest.raises(ValueError):
+        Settings(_env_file=None, context_max_tokens=MIN_CONTEXT_TOKENS - 1)  # type: ignore[call-arg]

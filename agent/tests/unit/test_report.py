@@ -1,5 +1,5 @@
 from audit_agent.schemas.finding import CodeLocation, Finding, FindingDraft, FindingSource, Severity
-from audit_agent.schemas.report import AuditReport, CostSummary, RunMeta, StaticAnalysisStatus
+from audit_agent.schemas.report import AuditReport, CostSummary, RunMeta, StaticAnalysisStatus, ContextInfo
 
 
 def make_finding() -> Finding:
@@ -39,3 +39,13 @@ def test_static_analysis_defaults_to_not_run_and_roundtrips():
     )
     assert report.static_analysis.status == StaticAnalysisStatus.NOT_RUN
     assert AuditReport.model_validate_json(report.model_dump_json()) == report
+
+
+def test_context_info_roundtrips_inside_a_report():
+    info = ContextInfo(
+        file="A.sol", total_lines=100, included_ranges=[(1, 40), (81, 100)],
+        truncated=True, est_tokens=10, max_tokens=20_000, imports=['import "./B.sol";'],
+    )
+    report = AuditReport(meta=RunMeta(model="m", prompt_version="v1"), target="A.sol", context=info)
+    assert AuditReport.model_validate_json(report.model_dump_json()) == report
+    assert AuditReport(meta=RunMeta(model="m", prompt_version="v1"), target="A.sol").context is None

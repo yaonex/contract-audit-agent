@@ -3,7 +3,7 @@ import threading
 import pytest
 
 from audit_agent.llm.client import Usage
-from audit_agent.llm.cost import BudgetExceeded, CostTracker
+from audit_agent.llm.cost import BudgetExceeded, CostTracker, estimate_tokens, estimate_tokens_from_chars, token_units
 
 
 def tracker(**over) -> CostTracker:
@@ -86,3 +86,22 @@ def test_concurrent_recording_loses_nothing():
     [th.join() for th in threads]
     assert t.snapshot().llm_calls == 4000
     assert t.total_tokens == 8000
+
+
+def test_estimate_for_ascii_text():
+    assert (estimate_tokens(""), estimate_tokens("a" * 300), estimate_tokens("a" * 301)) == (0, 100, 101)
+
+
+def test_non_ascii_characters_count_as_whole_tokens():
+    assert estimate_tokens("你好") == 2
+    assert token_units("a你") == 1 + 3
+
+
+def test_units_add_up_exactly_over_concatenation():
+    a, b = "contract 合约 {\n", "uint x;\n"
+    assert token_units(a + b) == token_units(a) + token_units(b)
+
+
+def test_estimating_from_a_length_assumes_ascii():
+    assert estimate_tokens_from_chars(300) == estimate_tokens("a" * 300) == 100
+    assert estimate_tokens_from_chars(0) == 0

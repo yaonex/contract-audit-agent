@@ -11,7 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from audit_agent.llm.types import CacheMode
@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     # quotes another currency. Prices change, so they live here, not in the model whitelist.
     llm_price_in_usd_per_mtok: float | None = None
     llm_price_out_usd_per_mtok: float | None = None
+
+    # --- Source context (context/source.py) ---
+    # Token budget for the contract text shown to the model (an ESTIMATE, see llm/cost.py).
+    # The floor equals context.budget.MIN_CONTEXT_TOKENS: below it, one long line could leave
+    # no room for any line at all. A test keeps the two numbers equal.
+    context_max_tokens: int = Field(default=20_000, ge=8_000)
 
     # --- Static analysis (static_analysis/slither_runner.py) ---
     # Slither is a PROJECT dependency (pyproject, pinned). A bare name is looked up in the

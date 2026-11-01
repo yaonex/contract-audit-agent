@@ -59,11 +59,27 @@ class StaticAnalysisInfo(BaseModel):
     raw_output_path: str | None = None  # raw json (or stderr on failure), relative to the trace dir
 
 
+class ContextInfo(BaseModel):
+    """What the model was shown of the contract. A partial view must never pass for a full
+    audit, so the coverage is part of the report."""
+
+    file: str                                   # relative to the audit root, never absolute
+    total_lines: int = Field(ge=1)
+    included_ranges: list[tuple[int, int]] = Field(default_factory=list)   # 1-based, inclusive
+    truncated: bool = False                     # whole lines were left out
+    est_tokens: int = Field(default=0, ge=0)    # estimated, see llm/cost.py
+    max_tokens: int = Field(default=0, ge=0)
+    n_long_lines: int = Field(default=0, ge=0)  # lines in the file longer than the per-line cap
+    imports: list[str] = Field(default_factory=list)   # import statements: NOT part of the context
+    had_decode_errors: bool = False             # bytes that were not valid UTF-8 were replaced
+
+
 class AuditReport(BaseModel):
     meta: RunMeta
     target: str                                   # audited file/dir path
     cost: CostSummary = Field(default_factory=CostSummary)
     static_analysis: StaticAnalysisInfo = Field(default_factory=StaticAnalysisInfo)
+    context: ContextInfo | None = None
     findings: list[Finding] = Field(default_factory=list)
 
     def counts_by_status(self) -> dict[str, int]:

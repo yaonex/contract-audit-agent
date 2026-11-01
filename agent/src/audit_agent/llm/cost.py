@@ -10,22 +10,52 @@ Design notes:
   while retrying after the budget is gone only burns more money.
 - Tokens come from the API's `usage`. For reasoning models this already includes thinking
   tokens, which is why we never estimate from visible output.
-- If a provider omits usage, we estimate from character counts (deliberately high) and
-  count it in `estimated_calls`, so a zero-usage reply can never bypass the budget.
+- If a provider omits usage, we estimate from character counts and count it in
+  `estimated_calls`, so a zero-usage reply can never bypass the budget. That path only has
+  LENGTHS, so it assumes ASCII (see estimate_tokens_from_chars); CJK-heavy traffic would be
+  under-estimated there. Whitelisted models are verified to return usage, so it is a backstop.
 - Cache hits cost nothing and are counted separately, not charged.
 - Prices are optional. Without them the USD budget cannot be enforced; we warn loudly.
+
+Size estimation (shared with context/budget.py, written only once):
+- No tokenizer is available, so: one ASCII character = 1/3 token, every non-ASCII character =
+  1 whole token. Real ratios (my recollection, NOT measured): English prose ~4 chars/token,
+  code ~3, CJK 1 or more tokens per character. So the estimate is a little high for prose,
+  about right for code, and no longer far too low for CJK. It is a pre-flight size check and a
+  safety net; real spend always comes from `usage`.
+- The estimate works in integer "units" (1 ASCII char = 1 unit, 3 units = 1 token). Units are
+  exactly additive over concatenation, which lets context/budget.py prove a selection fits.
 """
 import logging
 import threading
 
 from audit_agent.config import Settings
+from audit_agent.llm.types import Usage
 from audit_agent.schemas.report import CostSummary
 
 logger = logging.getLogger(__name__)
 
-# Chars-per-token used only when the provider returns no usage. Real text is ~4 chars/token
-# in English and fewer for code/CJK, so 3 over-estimates on purpose (budget is a safety net).
-_CHARS_PER_TOKEN_ESTIMATE = 3
+UNITS_PER_TOKEN = 3
+
+
+def token_units(text: str) -> int:
+    """Size of `text` in 1/3-token units: 1 per ASCII character, 3 per non-ASCII character."""
+    ascii_chars = len(text.encode("ascii", "ignore"))
+    return ascii_chars + UNITS_PER_TOKEN * (len(text) - ascii_chars)
+
+
+def tokens_from_units(units: int) -> int:
+    return -(-max(units, 0) // UNITS_PER_TOKEN)   # ceil
+
+
+def estimate_tokens(text: str) -> int:
+    """Rough token count of `text` (see the module docstring)."""
+    return tokens_from_units(token_units(text))
+
+
+def estimate_tokens_from_chars(chars: int) -> int:
+    """Token estimate when only a LENGTH is known; assumes ASCII text."""
+    return tokens_from_units(chars)
 
 
 class BudgetExceeded(Exception):
@@ -85,14 +115,13 @@ class CostTracker:
             if self.cost_known and self._cost >= self.max_cost_usd:
                 raise BudgetExceeded("cost_usd", self._cost, self.max_cost_usd)
 
-    def record(self, usage, *, prompt_chars: int = 0, completion_chars: int = 0) -> None:
-        """Call after every real LLM call. `usage` is a client.Usage (duck-typed here to
-        avoid a circular import). The *_chars arguments are only used if usage is empty."""
+    def record(self, usage: Usage, *, prompt_chars: int = 0, completion_chars: int = 0) -> None:
+        """Call after every real LLM call. The *_chars arguments are only used if usage is empty."""
         prompt, completion = usage.prompt_tokens, usage.completion_tokens
         estimated = prompt == 0 and completion == 0
         if estimated:
-            prompt = -(-prompt_chars // _CHARS_PER_TOKEN_ESTIMATE)          # ceil
-            completion = -(-completion_chars // _CHARS_PER_TOKEN_ESTIMATE)  # ceil
+            prompt = estimate_tokens_from_chars(prompt_chars)
+            completion = estimate_tokens_from_chars(completion_chars)
         cost = 0.0
         if self.cost_known:
             cost = (prompt * self._price_in + completion * self._price_out) / 1_000_000  # type: ignore[operator]
