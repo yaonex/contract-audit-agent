@@ -119,6 +119,8 @@ class AgentResult[T: BaseModel]:
     rounds: int
     model_calls: int
     elapsed_s: float
+    format_retries: int = 0
+    truncations: int = 0
 
 
 @dataclass
@@ -129,6 +131,7 @@ class _RunState:
     rounds: int = 0
     model_calls: int = 0
     format_retries: int = 0
+    truncations: int = 0
     last_content: str | None = None
 
 
@@ -256,6 +259,8 @@ class Agent:
                 rounds=state.rounds,
                 model_calls=state.model_calls,
                 elapsed_s=self._clock() - started,
+                format_retries=state.format_retries,
+                truncations=state.truncations,
             )
 
     def _loop[T: BaseModel](
@@ -274,6 +279,7 @@ class Agent:
             state.last_content = reply.content
 
             if reply.finish_reason == "length":
+                state.truncations += 1
                 # Cut off (tool arguments or answer may be incomplete): run nothing, keep the
                 # messages, give the model more room. Same remedy as structured_chat.
                 if tokens >= self._max_tokens_cap:

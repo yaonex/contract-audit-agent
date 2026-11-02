@@ -16,7 +16,7 @@ def _now() -> datetime:
 class RunMeta(BaseModel):
     run_id: str = Field(default_factory=lambda: uuid4().hex[:12])
     model: str
-    prompt_version: str
+    prompt_version: str = "reentrancy-v1"
     # External tool versions (slither, solc). Detectors change between versions, so results
     # are only comparable when these match.
     tool_versions: dict[str, str] = Field(default_factory=dict)
@@ -59,6 +59,24 @@ class StaticAnalysisInfo(BaseModel):
     raw_output_path: str | None = None  # raw json (or stderr on failure), relative to the trace dir
 
 
+class DiscoveryInfo(BaseModel):
+    """What happened in the LLM discovery step. Nothing is dropped silently: all filtering
+    and grounding discards are counted here."""
+
+    model_returned: int = Field(default=0, ge=0)
+    kept: int = Field(default=0, ge=0)
+    dropped_outside_file: int = Field(default=0, ge=0)
+    dropped_in_omitted: int = Field(default=0, ge=0)
+    dropped_invalid_range: int = Field(default=0, ge=0)
+    dropped_no_verified_quote: int = Field(default=0, ge=0)
+    dropped_duplicate: int = Field(default=0, ge=0)
+    dropped_over_limit: int = Field(default=0, ge=0)
+    names_cleared: int = Field(default=0, ge=0)
+    retries: int = Field(default=0, ge=0)
+    truncations: int = Field(default=0, ge=0)
+    duration_s: float = Field(default=0.0, ge=0.0)
+
+
 class ContextInfo(BaseModel):
     """What the model was shown of the contract. A partial view must never pass for a full
     audit, so the coverage is part of the report."""
@@ -79,6 +97,7 @@ class AuditReport(BaseModel):
     target: str                                   # audited file/dir path
     cost: CostSummary = Field(default_factory=CostSummary)
     static_analysis: StaticAnalysisInfo = Field(default_factory=StaticAnalysisInfo)
+    discovery: DiscoveryInfo = Field(default_factory=DiscoveryInfo)
     context: ContextInfo | None = None
     findings: list[Finding] = Field(default_factory=list)
 

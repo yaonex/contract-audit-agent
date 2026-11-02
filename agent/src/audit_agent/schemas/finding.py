@@ -69,6 +69,61 @@ class FindingDraft(BaseModel):
         return norm
 
 
+class DiscovererItem(BaseModel):
+    """Flat finding item emitted by category discoverers."""
+
+    title: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    line_start: int
+    line_end: int
+    function: str | None = None
+    contract: str | None = None
+    quotes: list[str]
+    severity: Severity
+    confidence: float
+
+    @field_validator("severity", mode="before")
+    @classmethod
+    def _normalize_severity(cls, v: object) -> object:
+        if isinstance(v, str):
+            clean = v.strip().lower()
+            try:
+                return Severity(clean)
+            except ValueError:
+                return clean
+        return v
+
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def _normalize_confidence(cls, v: object) -> float:
+        if isinstance(v, str):
+            try:
+                v = float(v.strip())
+            except ValueError:
+                raise ValueError(f"confidence must be a number, got '{v}'")
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            return max(0.0, min(1.0, float(v)))
+        raise ValueError(f"confidence must be a number, got '{v}'")
+
+    @field_validator("line_start", "line_end", mode="before")
+    @classmethod
+    def _validate_line_numbers(cls, v: object) -> int:
+        if isinstance(v, str):
+            try:
+                return int(v.strip())
+            except ValueError:
+                raise ValueError(f"line number must be an integer, got '{v}'")
+        if isinstance(v, int) and not isinstance(v, bool):
+            return v
+        raise ValueError(f"line number must be an integer, got '{v}'")
+
+
+class DiscovererOutput(BaseModel):
+    """Outer envelope for Discoverer responses. findings has no default."""
+
+    findings: list[DiscovererItem]
+
+
 class Finding(FindingDraft):
     """System-side finding. id/status/source are never set by the LLM."""
 
@@ -86,3 +141,4 @@ class Finding(FindingDraft):
         loc = self.location
         anchor = loc.function or f"L{loc.line_start}"
         return f"{self.category}|{loc.file}|{anchor}"
+
