@@ -2,26 +2,133 @@
 from collections import Counter
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
-from audit_agent.schemas.finding import Finding
+from audit_agent.schemas.finding import Finding, FindingStatus, Severity
 
 
 def _now() -> datetime:
     return datetime.now(UTC)
 
 
+class DegradationType(StrEnum):
+    STATIC_ANALYSIS_FAILED = "static_analysis_failed"
+    CONTEXT_TRUNCATED = "context_truncated"
+    LLM_VALIDATION_RETRY = "llm_validation_retry"
+    LINE_NUMBER_INVALID = "line_number_invalid"
+    OTHER = "other"
+
+
+class DegradationRecord(BaseModel):
+    stage: str
+    type: DegradationType
+    description: str
+    impact: str = ""
+    location: str | None = None
+
+
+class SnippetLine(BaseModel):
+    line_number: int | None = None  # None for omission/ellipsis markers
+    content: str
+    is_omitted: bool = False
+
+
+class CodeSnippet(BaseModel):
+    file: str
+    start_line: int
+    end_line: int
+    lines: list[SnippetLine] = Field(default_factory=list)
+
+    def render(self) -> str:
+        """Render snippet as formatted lines with line numbers and omission markers."""
+        if not self.lines:
+            return ""
+        max_num = max((ln.line_number for ln in self.lines if ln.line_number is not None), default=0)
+        width = max(len(str(max_num)), 2)
+        out: list[str] = []
+        for line in self.lines:
+            if line.is_omitted or line.line_number is None:
+                out.append(f"{'':>{width}} | {line.content}")
+            else:
+                out.append(f"{line.line_number:>{width}} | {line.content}")
+        return "\n".join(out)
+
+
+class ReportFinding(Finding):
+    """Finding augmented with report presentation fields (code snippets, assessment sources)."""
+
+    snippets: list[CodeSnippet] = Field(default_factory=list)
+    severity_source: str = "discoverer"
+    confidence_source: str = "discoverer"
+    exploit_path: str | None = None
+    recommendation: str | None = None
+
+    @classmethod
+    def from_finding(
+        cls,
+        finding: Finding,
+        *,
+        status: FindingStatus | None = None,
+        snippets: list[CodeSnippet] | None = None,
+        severity_source: str = "discoverer",
+        confidence_source: str = "discoverer",
+        exploit_path: str | None = None,
+        recommendation: str | None = None,
+    ) -> "ReportFinding":
+        """Construct a ReportFinding from an existing Finding, applying report fields."""
+        data = finding.model_dump()
+        if status is not None:
+            data["status"] = status
+        data["snippets"] = snippets or []
+        data["severity_source"] = severity_source
+        data["confidence_source"] = confidence_source
+        data["exploit_path"] = exploit_path or getattr(finding, "exploit_path", None)
+        data["recommendation"] = recommendation or getattr(finding, "recommendation", None)
+        return cls.model_validate(data)
+
+
 class RunMeta(BaseModel):
+    schema_version: str = "0.1.0"
     run_id: str = Field(default_factory=lambda: uuid4().hex[:12])
-    model: str
-    prompt_version: str = "reentrancy-v1"
+    model: str = ""
+    prompt_version: str = "reentrancy.v1"
     # External tool versions (slither, solc). Detectors change between versions, so results
     # are only comparable when these match.
     tool_versions: dict[str, str] = Field(default_factory=dict)
     started_at: datetime = Field(default_factory=_now)
     finished_at: datetime | None = None
+    generated_at: datetime = Field(default_factory=_now)
+    target_path: str = ""
+    target_hash: str | None = None
+    code_version: str | None = None
+
+
+class RunConfig(BaseModel):
+    model: str = ""
+    provider: str = ""
+    prompt_version: str = "reentrancy.v1"
+    max_total_tokens: int = 200_000
+    max_cost_usd: float = 0.5
+    rag_enabled: bool = False
+    verifier_enabled: bool = False
+    judge_enabled: bool = False
+    covered_categories: list[str] = Field(default_factory=lambda: ["reentrancy"])
+
+
+class ReportStats(BaseModel):
+    slither_findings: int | None = None
+    discoverer_candidates: int = 0
+    final_findings: int = 0
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    cost_usd: float = 0.0
+    duration_s: float = 0.0
+    llm_calls: int = 0
+    validation_retries: int = 0
 
 
 class CostSummary(BaseModel):
@@ -94,12 +201,34 @@ class ContextInfo(BaseModel):
 
 class AuditReport(BaseModel):
     meta: RunMeta
-    target: str                                   # audited file/dir path
+    run_config: RunConfig = Field(default_factory=RunConfig)
+    target: str = ""                               # audited file/dir path
+    findings: list[ReportFinding] = Field(default_factory=list)
+    stats: ReportStats = Field(default_factory=ReportStats)
+    degradations: list[DegradationRecord] = Field(default_factory=list)
     cost: CostSummary = Field(default_factory=CostSummary)
     static_analysis: StaticAnalysisInfo = Field(default_factory=StaticAnalysisInfo)
     discovery: DiscoveryInfo = Field(default_factory=DiscoveryInfo)
     context: ContextInfo | None = None
-    findings: list[Finding] = Field(default_factory=list)
+
+    @field_validator("findings", mode="before")
+    @classmethod
+    def _coerce_findings(cls, v: Any) -> Any:
+        if isinstance(v, list):
+            res = []
+            for item in v:
+                if isinstance(item, Finding) and not isinstance(item, ReportFinding):
+                    res.append(ReportFinding(**item.model_dump()))
+                else:
+                    res.append(item)
+            return res
+        return v
 
     def counts_by_status(self) -> dict[str, int]:
         return dict(Counter(f.status.value for f in self.findings))
+
+    def counts_by_severity(self) -> dict[str, int]:
+        counts = {s.value: 0 for s in Severity}
+        for f in self.findings:
+            counts[f.severity.value] = counts.get(f.severity.value, 0) + 1
+        return counts

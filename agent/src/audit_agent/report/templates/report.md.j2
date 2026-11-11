@@ -1,3 +1,114 @@
-# Audit Report: {{ contract_name }}
+# Smart Contract Security Audit Report: {{ meta.target_path }}
 
-TODO
+## Executive Summary
+- **Target File**: `{{ meta.target_path }}`
+- **Target SHA-256**: `{{ meta.target_hash }}`
+- **Generated At**: {{ meta.generated_at }} (UTC)
+- **Model**: `{{ run_config.model }}`
+- **Prompt Version**: `{{ run_config.prompt_version }}`
+- **Components**: {{ meta.components_summary }}
+{% if meta.tool_versions_summary %}
+- **Tools**: {{ meta.tool_versions_summary }}
+{% endif %}
+
+### Scope & MVP Notice
+- **Vulnerability Scope**: Only **reentrancy** vulnerabilities are covered in this audit (Phase 1.2.5 MVP).
+- **Verification Status**: All findings are unverified by automated PoC.
+
+{% if degradations.has_degradations %}
+## ⚠️ Degradation Notice
+
+> **WARNING**: The audit run encountered degradations. Results may be partial or incomplete.
+
+### Degradation Log
+| Stage | Type | Description | Location / Context |
+| :--- | :--- | :--- | :--- |
+{% for d in degradations.records %}
+| {{ d.stage }} | `{{ d.type }}` | {{ d.description }} | {{ d.location }} |
+{% endfor %}
+{% endif %}
+
+## Vulnerability Overview
+
+| Severity | Count |
+| :--- | :--- |
+| Critical | {{ severity_counts.critical }} |
+| High | {{ severity_counts.high }} |
+| Medium | {{ severity_counts.medium }} |
+| Low | {{ severity_counts.low }} |
+| Informational | {{ severity_counts.info }} |
+| **Total** | **{{ severity_counts.total }}** |
+
+{% if zero_findings_status %}
+{{ zero_findings_status }}
+{% endif %}
+
+{% if findings %}
+## Findings Detail
+
+{% for f in findings %}
+### {{ f.index }}. [{{ f.severity }}] {{ f.title }}
+
+- **ID**: `{{ f.id }}`
+- **Category**: `{{ f.category }}`
+- **Severity**: **{{ f.severity }}** (Source: {{ f.severity_source }})
+- **Confidence**: {{ f.confidence }} (Source: {{ f.confidence_source }})
+- **Verification Status**: `{{ f.status }}`
+- **Location**: `{{ f.location_str }}`
+{% if f.rule_id %}
+- **Rule ID**: `{{ f.rule_id }}`
+{% endif %}
+
+#### Description
+{{ f.description }}
+{% if f.exploit_path %}
+
+#### Exploit / Trigger Path
+{{ f.exploit_path }}
+{% endif %}
+{% if f.recommendation %}
+
+#### Recommendation
+{{ f.recommendation }}
+{% endif %}
+{% if f.snippets %}
+
+#### Code Snippets
+{% for snip in f.snippets %}
+````solidity
+{{ snip }}
+````
+{% endfor %}
+{% endif %}
+
+---
+{% endfor %}
+{% endif %}
+
+## Appendix
+
+### Execution Funnel
+- **Slither Findings**: {{ funnel.slither_findings }}
+- **Discoverer Candidates**: {{ funnel.discoverer_candidates }}
+- **Final Reported Findings**: {{ funnel.final_findings }}
+
+### Cost & Performance
+- **LLM Calls**: {{ stats.llm_calls }}
+- **Validation Retries**: {{ stats.validation_retries }}
+- **Prompt Tokens**: {{ stats.prompt_tokens }}
+- **Completion Tokens**: {{ stats.completion_tokens }}
+- **Total Tokens**: {{ stats.total_tokens }}
+- **Estimated Cost**: ${{ "%.4f"|format(stats.cost_usd) }} USD
+- **Total Duration**: {{ stats.duration_s }}s
+
+### Run Configuration Snapshot
+- **Model**: `{{ run_config.model }}`
+- **Provider**: `{{ run_config.provider }}`
+- **Prompt Version**: `{{ run_config.prompt_version }}`
+- **Token Budget**: {{ run_config.max_total_tokens }}
+- **Cost Budget**: ${{ "%.2f"|format(run_config.max_cost_usd) }} USD
+- **RAG Enabled**: {{ run_config.rag_enabled }}
+- **Verifier Enabled**: {{ run_config.verifier_enabled }}
+- **Judge Enabled**: {{ run_config.judge_enabled }}
+- **Covered Categories**: {{ run_config.covered_categories|join(', ') }}
+

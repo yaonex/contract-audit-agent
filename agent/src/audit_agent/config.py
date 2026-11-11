@@ -66,6 +66,10 @@ class Settings(BaseSettings):
     # state. Empty string means "not set".
     solc_version: str | None = None
 
+    # --- Report (report/) ---
+    report_max_snippet_lines: int = 12
+    report_max_snippets_per_finding: int = 3
+
     # --- Paths (aligned with .gitignore; override via AUDIT_*_DIR / AUDIT_TAXONOMY_PATH) ---
     cache_dir: Path = Path("agent/.cache/llm")
     trace_dir: Path = Path("agent/.traces")
